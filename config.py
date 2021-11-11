@@ -8,7 +8,7 @@ class TaskConfig:
     batch_size: int = 256
     learning_rate: float = 3e-4
     weight_decay: float = 1e-5
-    num_epochs: int = 25
+    num_epochs: int = 15
     n_mels: int = 40
     kernel_size: int = 16
     stride: int = 10
