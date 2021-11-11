@@ -92,8 +92,8 @@ class FullModel(nn.Module):
         self.crnn_buffer = None
 
     def stream_on(self):
-        self.spec_buffer = torch.Tensor([], device=self.U.device)
-        self.crnn_buffer = torch.Tensor([], device=self.U.device)
+        self.spec_buffer = torch.Tensor([]).to(self.U.weight.device)
+        self.crnn_buffer = torch.Tensor([]).to(self.U.weight.device)
         self.streaming = True
 
     def stream_off(self):
