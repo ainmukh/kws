@@ -1,0 +1,21 @@
+import torch
+import dataclasses
+from typing import Tuple
+
+@dataclasses.dataclass
+class TaskConfig:
+    keyword: str = 'sheila'  # We will use 1 key word -- 'sheila'
+    batch_size: int = 256
+    learning_rate: float = 3e-4
+    weight_decay: float = 1e-5
+    num_epochs: int = 25
+    n_mels: int = 40
+    kernel_size: Tuple[int, int] = (20, 5)
+    stride: Tuple[int, int] = (8, 2)
+    hidden_size: int = 128
+    gru_num_layers: int = 2
+    bidirectional: bool = False
+    num_classes: int = 2
+    sample_rate: int = 16000
+    device: torch.device = torch.device(
+        'cuda:0' if torch.cuda.is_available() else 'cpu')
