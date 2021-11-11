@@ -85,4 +85,4 @@ for n in range(TaskConfig.num_epochs):
     plt.grid()
     plt.show()
 
-    print('END OF EPOCH', n)
+    print('END OF EPOCH {:2}; auc: {:1.5f}'.format(n, au_fa_fr))
