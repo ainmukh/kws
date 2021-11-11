@@ -12,79 +12,84 @@ from src.model import CRNN, AttnMech, FullModel
 from config import TaskConfig
 
 
-# get data
-dataset_downloader = DatasetDownloader(TaskConfig.keyword)
-labeled_data, background_noises = dataset_downloader.generate_labeled_data()
+def train():
+    # get data
+    dataset_downloader = DatasetDownloader(TaskConfig.keyword)
+    labeled_data, background_noises = dataset_downloader.generate_labeled_data()
 
-labeled_data.sample(3)
-
-
-# get dataframes
-indexes = torch.randperm(len(labeled_data))
-train_indexes = indexes[:int(len(labeled_data) * 0.8)]
-val_indexes = indexes[int(len(labeled_data) * 0.8):]
-
-train_df = labeled_data.iloc[train_indexes].reset_index(drop=True)
-val_df = labeled_data.iloc[val_indexes].reset_index(drop=True)
+    labeled_data.sample(3)
 
 
-# Sample is a dict of utt, word and label
-transform_tr = AugsCreation()
-train_set = TrainDataset(df=train_df, kw=TaskConfig.keyword, transform=transform_tr)
-val_set = TrainDataset(df=val_df, kw=TaskConfig.keyword)
+    # get dataframes
+    indexes = torch.randperm(len(labeled_data))
+    train_indexes = indexes[:int(len(labeled_data) * 0.8)]
+    val_indexes = indexes[int(len(labeled_data) * 0.8):]
+
+    train_df = labeled_data.iloc[train_indexes].reset_index(drop=True)
+    val_df = labeled_data.iloc[val_indexes].reset_index(drop=True)
 
 
-# samplers
-train_sampler = get_sampler(train_set.df['label'].values)
-val_sampler = get_sampler(val_set.df['label'].values)
+    # Sample is a dict of utt, word and label
+    transform_tr = AugsCreation()
+    train_set = TrainDataset(df=train_df, kw=TaskConfig.keyword, transform=transform_tr)
+    val_set = TrainDataset(df=val_df, kw=TaskConfig.keyword)
 
 
-# Here we are obliged to use shuffle=False because of our sampler with randomness inside.
-train_loader = DataLoader(train_set, batch_size=TaskConfig.batch_size,
-                          shuffle=False, collate_fn=Collator(),
-                          sampler=train_sampler)
-#                           num_workers=2, pin_memory=True)
-
-val_loader = DataLoader(val_set, batch_size=TaskConfig.batch_size,
-                        shuffle=False, collate_fn=Collator(),
-                        sampler=val_sampler,
-                        num_workers=2, pin_memory=True)
+    # samplers
+    train_sampler = get_sampler(train_set.df['label'].values)
+    val_sampler = get_sampler(val_set.df['label'].values)
 
 
-# melspecs
-melspec_train = LogMelspec(is_train=True, config=TaskConfig)
-melspec_val = LogMelspec(is_train=False, config=TaskConfig)
+    # Here we are obliged to use shuffle=False because of our sampler with randomness inside.
+    train_loader = DataLoader(train_set, batch_size=TaskConfig.batch_size,
+                              shuffle=False, collate_fn=Collator(),
+                              sampler=train_sampler)
+    #                           num_workers=2, pin_memory=True)
+
+    val_loader = DataLoader(val_set, batch_size=TaskConfig.batch_size,
+                            shuffle=False, collate_fn=Collator(),
+                            sampler=val_sampler,
+                            num_workers=2, pin_memory=True)
 
 
-history = defaultdict(list)
+    # melspecs
+    melspec_train = LogMelspec(is_train=True, config=TaskConfig)
+    melspec_val = LogMelspec(is_train=False, config=TaskConfig)
 
 
-CRNN_model = CRNN(TaskConfig)
-attn_layer = AttnMech(TaskConfig)
-full_model = FullModel(TaskConfig, CRNN_model, attn_layer)
-full_model = full_model.to(TaskConfig.device)
-
-print(full_model)
-
-opt = torch.optim.Adam(full_model.parameters(),
-                       lr=TaskConfig.learning_rate, weight_decay=TaskConfig.weight_decay)
+    history = defaultdict(list)
 
 
-for n in range(TaskConfig.num_epochs):
-    train_epoch(full_model, opt, train_loader,
-                melspec_train, TaskConfig.device)
+    CRNN_model = CRNN(TaskConfig)
+    attn_layer = AttnMech(TaskConfig)
+    full_model = FullModel(TaskConfig, CRNN_model, attn_layer)
+    full_model = full_model.to(TaskConfig.device)
 
-    au_fa_fr = validation(full_model, val_loader,
-                          melspec_val, TaskConfig.device)
-    history['val_metric'].append(au_fa_fr)
-    if len(history['val_metric']) == 1 or au_fa_fr < history['val_metric'][-2]:
-        torch.save(full_model.state_dict(), TaskConfig.save_to)
+    print(full_model)
 
-    clear_output()
-    plt.plot(history['val_metric'])
-    plt.ylabel('Metric')
-    plt.xlabel('Epoch')
-    plt.grid()
-    plt.show()
+    opt = torch.optim.Adam(full_model.parameters(),
+                           lr=TaskConfig.learning_rate, weight_decay=TaskConfig.weight_decay)
 
-    print('END OF EPOCH {:2}; auc: {:1.5f}'.format(n, au_fa_fr))
+
+    for n in range(TaskConfig.num_epochs):
+        train_epoch(full_model, opt, train_loader,
+                    melspec_train, TaskConfig.device)
+
+        au_fa_fr = validation(full_model, val_loader,
+                              melspec_val, TaskConfig.device)
+        history['val_metric'].append(au_fa_fr)
+        if len(history['val_metric']) == 1 or au_fa_fr < history['val_metric'][-2]:
+            torch.save(full_model.state_dict(), TaskConfig.save_to)
+
+        clear_output()
+        plt.plot(history['val_metric'])
+        plt.ylabel('Metric')
+        plt.xlabel('Epoch')
+        plt.grid()
+        plt.show()
+
+        print('END OF EPOCH {:2}; auc: {:1.5f}'.format(n, au_fa_fr))
+
+
+if __name__ == "__main__":
+    train()
