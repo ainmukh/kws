@@ -77,6 +77,8 @@ for n in range(TaskConfig.num_epochs):
     au_fa_fr = validation(full_model, val_loader,
                           melspec_val, TaskConfig.device)
     history['val_metric'].append(au_fa_fr)
+    if len(history['val_metric']) == 1 or au_fa_fr < history['val_metric'][-2]:
+        torch.save(full_model.state_dict(), TaskConfig.save_to)
 
     clear_output()
     plt.plot(history['val_metric'])

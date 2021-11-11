@@ -1,6 +1,6 @@
 pandas
 tqdm
 torch
-torchaudio
+torchaudio==0.9.1
 IPython
 matplotlib
