@@ -1,6 +1,6 @@
 import torch
 import dataclasses
-from typing import Tuple
+
 
 @dataclasses.dataclass
 class TaskConfig:
@@ -10,8 +10,8 @@ class TaskConfig:
     weight_decay: float = 1e-5
     num_epochs: int = 25
     n_mels: int = 40
-    kernel_size: Tuple[int, int] = (20, 5)
-    stride: Tuple[int, int] = (8, 2)
+    kernel_size: int = 16
+    stride: int = 10
     hidden_size: int = 128
     gru_num_layers: int = 2
     bidirectional: bool = False

@@ -6,12 +6,13 @@ import torch.nn.functional as F
 # Pay attention to _groups_ param
 def SepConv(in_size, out_size, kernel_size, stride, padding=0):
     return nn.Sequential(
-        torch.nn.Conv1d(in_size, in_size, kernel_size[1],
-                        stride=stride[1], groups=in_size,
+        torch.nn.Conv1d(in_size, in_size, kernel_size,
+                        stride=stride, groups=in_size,
                         padding=padding),
 
         torch.nn.Conv1d(in_size, out_size, kernel_size=1,
-                        stride=stride[0], groups=int(in_size / kernel_size[0]))
+                        # stride=stride[0], groups=int(in_size / kernel_size[0]))
+                        stride=1, groups=1)
     )
 
 
@@ -71,7 +72,7 @@ class AttnMech(nn.Module):
 
 class FullModel(nn.Module):
 
-    def __init__(self, config, CRNN_model, attn_layer, max_window_length: int = None, t: int = None):
+    def __init__(self, config, CRNN_model, attn_layer, max_window_length: int = 7):
         super(FullModel, self).__init__()
 
         self.CRNN_model = CRNN_model
@@ -83,24 +84,39 @@ class FullModel(nn.Module):
         self.U = nn.Linear(config.hidden_size * ratio,
                            config.num_classes, bias=False)
 
-        # streaming
         self.streaming = False
-        self.max_window_length = max_window_length
-        self.slide = config.stride + t
-        self.buffer = None
+        self.max_window_length = max_window_length  # crnn output size
+        self.T = (max_window_length - 1) * config.stride + config.kernel_size  # melspec size
+        self.slide = config.stride
+        self.spec_buffer = None
+        self.crnn_buffer = None
 
     def stream_on(self):
+        self.spec_buffer = torch.Tensor([], device=self.U.device)
+        self.crnn_buffer = torch.Tensor([], device=self.U.device)
         self.streaming = True
-        self.buffer = torch.Tensor([])
 
     def stream_off(self):
+        self.spec_buffer = None
+        self.crnn_buffer = None
         self.streaming = False
 
     def forward(self, batch, hidden=None):
+        # print('input size =', batch.size())
         if self.streaming:
-            self.buffer = torch.cat((self.buffer, batch))[:, :, self.slide:]
+            batch = torch.cat((self.spec_buffer, batch), 2)
+            # print('cat bacth size =', batch.size())
 
         output, hidden = self.CRNN_model(batch, hidden)
+        # print('crnn size =', output.size())
+        if self.streaming:
+            self.spec_buffer = batch[:, :, self.slide * output.size(0):]
+            output = torch.cat((self.crnn_buffer, output), 0)
+            output = output[max(output.size(0) - self.max_window_length, 0):]
+            self.crnn_buffer = output
+            # print('crnn cat size =', output.size())
+            # print('spec buffer =', self.spec_buffer.size())
+            # print('crnn buffer =', self.crnn_buffer.size())
         # output : (seq_len, BS, hidden * num_dirs)
         # hidden : (num_layers * num_dirs, BS, hidden)
 
@@ -108,8 +124,8 @@ class FullModel(nn.Module):
         for seq_el in output:
             e_t = self.attn_layer(seq_el)  # (BS, 1)
             e.append(e_t)
-        e = torch.cat(e, dim=1)           # (BS, seq_len)
+        e = torch.cat(e, dim=1)  # (BS, seq_len)
 
-        c = self.attn_layer(e, output)    # attention_vector
+        c = self.attn_layer(e, output)  # attention_vector
         Uc = self.U(c)
-        return Uc, hidden               # we will need to get probs, so we use return logits
+        return Uc, hidden  # we will need to get probs, so we use return logits

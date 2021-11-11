@@ -12,16 +12,17 @@ from src.model import CRNN, AttnMech, FullModel
 from config import TaskConfig
 
 
+# get data
 dataset_downloader = DatasetDownloader(TaskConfig.keyword)
 labeled_data, background_noises = dataset_downloader.generate_labeled_data()
 
 labeled_data.sample(3)
 
 
+# get dataframes
 indexes = torch.randperm(len(labeled_data))
 train_indexes = indexes[:int(len(labeled_data) * 0.8)]
 val_indexes = indexes[int(len(labeled_data) * 0.8):]
-
 
 train_df = labeled_data.iloc[train_indexes].reset_index(drop=True)
 val_df = labeled_data.iloc[val_indexes].reset_index(drop=True)
@@ -33,6 +34,7 @@ train_set = TrainDataset(df=train_df, kw=TaskConfig.keyword, transform=transform
 val_set = TrainDataset(df=val_df, kw=TaskConfig.keyword)
 
 
+# samplers
 train_sampler = get_sampler(train_set.df['label'].values)
 val_sampler = get_sampler(val_set.df['label'].values)
 
@@ -49,6 +51,7 @@ val_loader = DataLoader(val_set, batch_size=TaskConfig.batch_size,
                         num_workers=2, pin_memory=True)
 
 
+# melspecs
 melspec_train = LogMelspec(is_train=True, config=TaskConfig)
 melspec_val = LogMelspec(is_train=False, config=TaskConfig)
 
@@ -68,7 +71,6 @@ opt = torch.optim.Adam(full_model.parameters(),
 
 
 for n in range(TaskConfig.num_epochs):
-
     train_epoch(full_model, opt, train_loader,
                 melspec_train, TaskConfig.device)
 
