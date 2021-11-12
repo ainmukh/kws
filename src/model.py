@@ -128,4 +128,4 @@ class FullModel(nn.Module):
 
         c = self.attn_layer(e, output)  # attention_vector
         Uc = self.U(c)
-        return Uc if hidden is None else Uc, hidden  # we will need to get probs, so we use return logits
+        return (Uc, hidden) if self.streaming else Uc   # we will need to get probs, so we use return logits
