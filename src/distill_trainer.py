@@ -21,8 +21,9 @@ def train_epoch(teacher, model, opt, loader, log_melspec, device, temperature: i
         logits = model(batch)
         # we need probabilities so we use softmax & CE separately
         probs = F.softmax(logits, dim=-1)
+        soft_labels = F.softmax(teacher_logits)
 
-        loss_1 = F.cross_entropy(logits / temperature, teacher_logits)
+        loss_1 = F.cross_entropy(logits / temperature, soft_labels)
         loss_2 = F.cross_entropy(logits, labels)
         loss = temperature**2 * loss_1 + loss_2
 
@@ -63,3 +64,5 @@ def train(
         plt.show()
 
         print('END OF EPOCH {:2}; auc: {:1.5f}'.format(n, au_fa_fr))
+
+    return history
