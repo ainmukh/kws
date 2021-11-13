@@ -2,14 +2,14 @@ import torch
 from src.dataset_utils import DatasetDownloader, TrainDataset
 from src.augmentations import AugsCreation
 from src.sampler import get_sampler, Collator
-from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
+from torch.utils.data import DataLoader
 from src.preprocessing import LogMelspec
 from collections import defaultdict
 from IPython.display import clear_output
 from matplotlib import pyplot as plt
-from src.trainer import train_epoch, validation
-from src.model import CRNN, AttnMech, FullModel
-from config import TaskConfig
+from src.base_trainer import train_epoch, validation
+from src.base_model import CRNN, AttnMech, FullModel
+from config.config import TaskConfig
 
 
 def train():
