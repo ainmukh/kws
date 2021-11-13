@@ -8,7 +8,10 @@ from IPython.display import clear_output
 from matplotlib import pyplot as plt
 
 
-def train_epoch(teacher, model, opt, loader, log_melspec, device, temperature: int = 1):
+def train_epoch(
+        teacher, model, opt, loader, log_melspec, device,
+        temperature: int = 1, alpha: float = 0.5, beta: float = 0.5
+):
     model.train()
     for i, (batch, labels) in tqdm(enumerate(loader)):
         batch, labels = batch.to(device), labels.to(device)
@@ -21,11 +24,11 @@ def train_epoch(teacher, model, opt, loader, log_melspec, device, temperature: i
         logits = model(batch)
         # we need probabilities so we use softmax & CE separately
         probs = F.softmax(logits, dim=-1)
-        soft_labels = F.softmax(teacher_logits)
+        soft_labels = F.softmax(teacher_logits, dim=-1)
 
         loss_1 = F.cross_entropy(logits / temperature, soft_labels)
         loss_2 = F.cross_entropy(logits, labels)
-        loss = temperature**2 * loss_1 + loss_2
+        loss = alpha * temperature**2 * loss_1 + beta * loss_2
 
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
@@ -43,9 +46,12 @@ def train_epoch(teacher, model, opt, loader, log_melspec, device, temperature: i
 def train(
         teacher, model, model_name, opt, config,
         train_loader, val_loader,
-        melspec_train, melspec_val
+        melspec_train, melspec_val,
+        history,
+        alpha: float = 0.5,
+        beta: float = 0.5
 ):
-    history = defaultdict(list)
+    # history = defaultdict(list)
     for n in range(config.num_epochs):
         train_epoch(teacher, model, opt, train_loader,
                     melspec_train, config.device, config.temperature)

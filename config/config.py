@@ -20,4 +20,4 @@ class TaskConfig:
     device: torch.device = torch.device(
         'cuda:0' if torch.cuda.is_available() else 'cpu')
     save_to: str = 'saved/model_base.pth'
-    temperature: int = 2
+    temperature: int = 5
