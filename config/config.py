@@ -1,18 +1,20 @@
 import torch
 import dataclasses
+from typing import Tuple
 
 
 @dataclasses.dataclass
 class TaskConfig:
     keyword: str = 'sheila'  # We will use 1 key word -- 'sheila'
-    batch_size: int = 256
+    batch_size: int = 128
     learning_rate: float = 3e-4
     weight_decay: float = 1e-5
-    num_epochs: int = 25
+    num_epochs: int = 20
     n_mels: int = 40
-    kernel_size: int = 16
-    stride: int = 10
-    hidden_size: int = 128
+    cnn_out_channels: int = 8
+    kernel_size: Tuple[int, int] = (5, 20)
+    stride: Tuple[int, int] = (2, 8)
+    hidden_size: int = 64
     gru_num_layers: int = 2
     bidirectional: bool = False
     num_classes: int = 2

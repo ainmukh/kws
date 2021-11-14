@@ -14,12 +14,17 @@ class AugsCreation:
             'speech_commands/_background_noise_/running_tap.wav'
         ]
 
+        self.noises = [
+            torchaudio.load(p)[0].squeeze()
+            for p in self.background_noises
+        ]
+
     def add_rand_noise(self, audio):
 
         # randomly choose noise
         noise_num = torch.randint(low=0, high=len(
             self.background_noises), size=(1,)).item()
-        noise = torchaudio.load(self.background_noises[noise_num])[0].squeeze()
+        noise = self.noises[noise_num]
 
         noise_level = torch.Tensor([1])  # [0, 40]
 
@@ -28,8 +33,11 @@ class AugsCreation:
         alpha = (audio_energy / noise_energy) * \
             torch.pow(10, -noise_level / 20)
 
-        start = torch.randint(low=0, high=int(
-            noise.size(0) - audio.size(0) - 1), size=(1,)).item()
+        start = torch.randint(
+            low=0,
+            high=max(int(noise.size(0) - audio.size(0) - 1), 1),
+            size=(1,)
+        ).item()
         noise_sample = noise[start: start + audio.size(0)]
 
         audio_new = audio + alpha * noise_sample

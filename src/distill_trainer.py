@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 def train_epoch(
         teacher, model, opt, loader, log_melspec, device,
-        temperature: int = 1, alpha: float = 0.5, beta: float = 0.5
+        temperature: int = 1, alpha: float = 1, beta: float = 1
 ):
     model.train()
     for i, (batch, labels) in tqdm(enumerate(loader)):
