@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from config.config import TaskConfig
 
 
@@ -23,7 +22,7 @@ class Attention(nn.Module):
 
 class CRNN(nn.Module):
 
-    def __init__(self, config: TaskConfig):
+    def __init__(self, config: TaskConfig, max_window_length: int = 7):
         super().__init__()
         self.config = config
 
@@ -43,11 +42,29 @@ class CRNN(nn.Module):
             hidden_size=config.hidden_size,
             num_layers=config.gru_num_layers,
             dropout=0.1,
-            bidirectional=config.bidirectional
+            bidirectional=config.bidirectional,
+            batch_first=True
         )
 
         self.attention = Attention(config.hidden_size)
         self.classifier = nn.Linear(config.hidden_size, config.num_classes)
+
+        self.streaming = False
+        self.max_window_length = max_window_length  # crnn output size
+        self.T = (max_window_length - 1) * config.stride + config.kernel_size  # melspec size
+        self.slide = config.stride
+        self.spec_buffer = None
+        self.crnn_buffer = None
+
+    def stream_on(self):
+        self.spec_buffer = torch.Tensor([]).to(self.U.weight.device)
+        self.crnn_buffer = torch.Tensor([]).to(self.U.weight.device)
+        self.streaming = True
+
+    def stream_off(self):
+        self.spec_buffer = None
+        self.crnn_buffer = None
+        self.streaming = False
 
     def forward(self, input):
         input = input.unsqueeze(dim=1)
