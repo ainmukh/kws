@@ -51,4 +51,5 @@ class DistillTrainer(BaseTrainer):
                     'learning rate': self.scheduler.get_last_lr()[0]
                 })
 
-        self.scheduler.step()
+        if self.config.schedule:
+            self.scheduler.step()
