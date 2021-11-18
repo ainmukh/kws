@@ -6,6 +6,7 @@ from config.config import TaskConfig
 from src.base_model import CRNN
 from torch.utils.data import DataLoader
 from src.preprocessing import LogMelspec
+from IPython.display import clear_output
 
 
 class DistillTrainer(BaseTrainer):
@@ -18,6 +19,8 @@ class DistillTrainer(BaseTrainer):
         super().__init__(config, model, train_loader, val_loader, melspec_train, melspec_val)
         self.teacher = teacher
         self.temperature = config.temperature
+
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.5)
 
     def _train_epoch(self, epoch):
         self.model.train()
@@ -44,5 +47,8 @@ class DistillTrainer(BaseTrainer):
             if idx % self.log_every == 0:
                 self.logger.log({
                     'loss': loss.item(),
-                    'grad norm': self.get_grad_norm()
+                    'grad norm': self.get_grad_norm(),
+                    'learning rate': self.scheduler.get_last_lr()[0]
                 })
+
+        self.scheduler.step()

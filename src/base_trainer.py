@@ -7,6 +7,7 @@ from src.metrics import get_au_fa_fr
 from config.config import TaskConfig
 from src.base_model import CRNN
 from src.preprocessing import LogMelspec
+from IPython.display import clear_output
 
 
 class BaseTrainer:
@@ -49,6 +50,7 @@ class BaseTrainer:
                 torch.save(self.model.state_dict(), self.save_to)
                 prev_auc = auc
 
+            clear_output()
             self.history.append(auc)
             print('END OF EPOCH {:2}; auc: {:1.6f}'.format(epoch + 1, auc))
         return self.history
@@ -71,7 +73,8 @@ class BaseTrainer:
             if idx % self.log_every == 0:
                 self.logger.log({
                     'loss': loss.item(),
-                    'grad norm': self.get_grad_norm()
+                    'grad norm': self.get_grad_norm(),
+                    'learning rate': self.optimizer.param_groups[0]['lr']
                 })
 
     @torch.no_grad()
