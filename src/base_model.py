@@ -66,10 +66,14 @@ class CRNN(nn.Module):
         self.crnn_buffer = None
         self.streaming = False
 
-    def forward(self, input):
-        input = input.unsqueeze(dim=1)
-        conv_output = self.conv(input).transpose(-1, -2)
-        gru_output, _ = self.gru(conv_output)
+    def forward(self, batch, hidden=None):
+        if self.streaming:
+            batch = torch.cat((self.spec_buffer, batch), 2)
+        batch = batch.unsqueeze(dim=1)
+
+        conv_output = self.conv(batch).transpose(-1, -2)
+        gru_output, hidden = self.gru(conv_output, hidden)
+
         contex_vector = self.attention(gru_output)
-        output = self.classifier(contex_vector)
-        return output
+        logits = self.classifier(contex_vector)
+        return (logits, hidden) if self.streaming else logits

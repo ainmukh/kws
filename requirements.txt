@@ -5,3 +5,4 @@ torchaudio==0.10.0
 IPython
 matplotlib
 thop
+wandb

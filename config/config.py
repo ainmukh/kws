@@ -10,6 +10,7 @@ class TaskConfig:
     learning_rate: float = 3e-4
     weight_decay: float = 1e-5
     num_epochs: int = 20
+    log_every: int = 1
     n_mels: int = 40
     cnn_out_channels: int = 8
     kernel_size: Tuple[int, int] = (5, 20)
