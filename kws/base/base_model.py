@@ -55,4 +55,4 @@ class CRNN(nn.Module):
 
         contex_vector = self.attention(gru_output)
         logits = self.classifier(contex_vector)
-        return (logits, hidden) if self.streaming else logits
+        return logits
