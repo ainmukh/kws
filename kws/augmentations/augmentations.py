@@ -2,8 +2,7 @@ import torch
 import torchaudio
 
 
-class AugsCreation:
-
+class Augmentation:
     def __init__(self):
         self.background_noises = [
             'speech_commands/_background_noise_/white_noise.wav',
@@ -20,7 +19,6 @@ class AugsCreation:
         ]
 
     def add_rand_noise(self, audio):
-
         # randomly choose noise
         noise_num = torch.randint(low=0, high=len(
             self.background_noises), size=(1,)).item()

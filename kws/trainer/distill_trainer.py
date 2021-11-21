@@ -1,12 +1,11 @@
 from tqdm.auto import tqdm
 import torch
 import torch.nn.functional as F
-from src.base_trainer import BaseTrainer
+from kws.base.base_trainer import BaseTrainer
 from config.config import TaskConfig
-from src.base_model import CRNN
+from kws.base.base_model import CRNN
 from torch.utils.data import DataLoader
-from src.preprocessing import LogMelspec
-from IPython.display import clear_output
+from kws.dataset.preprocessing import LogMelspec
 
 
 class DistillTrainer(BaseTrainer):
