@@ -25,3 +25,4 @@ class TaskConfig:
     save_to: str = 'saved/model_base.pth'
     temperature: int = 5
     schedule: bool = True
+    prune_iter: int = 7

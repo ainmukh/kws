@@ -21,6 +21,7 @@ class PruneTrainer(BaseTrainer):
         super(PruneTrainer, self).__init__(
             config, model, train_loader, val_loader, melspec_train, melspec_val
         )
+        self.prune_iter = config.prune_iter
 
     def _prune(self):
         aucs = []
@@ -81,7 +82,7 @@ class PruneTrainer(BaseTrainer):
         logging.basicConfig(level=logging.INFO)
         self.logger.init(project='KWS', config=self.config.__dict__)
 
-        for iter in self.prune_iter:
+        for iter in range(self.prune_iter):
             unprunned_auc = self._get_rank()
             self._prune()
             auc = float('inf')
