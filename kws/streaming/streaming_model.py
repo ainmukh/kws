@@ -14,8 +14,8 @@ class CRNN_streaming(CRNN):
         self.crnn_buffer = None
 
     def stream_on(self):
-        self.spec_buffer = torch.Tensor([]).to(self.U.weight.device)
-        self.crnn_buffer = torch.Tensor([]).to(self.U.weight.device)
+        self.spec_buffer = torch.Tensor([]).to(self.conv[0].weight.device)
+        self.crnn_buffer = torch.Tensor([]).to(self.conv[0].weight.device)
         self.streaming = True
 
     def stream_off(self):
