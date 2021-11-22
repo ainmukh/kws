@@ -1,5 +1,6 @@
 from kws.base import CRNN
 import torch
+from config.config import TaskConfig
 
 
 class CRNN_streaming(CRNN):
@@ -29,9 +30,12 @@ class CRNN_streaming(CRNN):
 
         conv_output = self.conv(batch).transpose(-1, -2)
         gru_output, hidden = self.gru(conv_output, hidden)
+        if self.streaming:
+            self.spec_buffer = batch[:, :, self.slide * conv_output.size(1):]
+            gru_output = torch.cat((self.crnn_buffer, gru_output), 1)
+            gru_output = gru_output[:, max(gru_output.size(1) - self.max_window_length, 0):]
+            self.crnn_buffer = gru_output
 
         contex_vector = self.attention(gru_output)
         logits = self.classifier(contex_vector)
         return (logits, hidden) if self.streaming else logits
-
-
