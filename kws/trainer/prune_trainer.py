@@ -82,14 +82,15 @@ class PruneTrainer(BaseTrainer):
     def prune_train(self):
         logging.basicConfig(level=logging.INFO)
         self.logger.init(project='KWS', config=self.config.__dict__)
-
+        cnt = 0
         for iter in range(self.prune_iter):
-            unprunned_auc = 5e-5
+            unprunned_auc = 5e-5 * 1.1
             self._prune()
             auc = float('inf')
             logging.info("Train prunned model")
-            for epoch in range(10):
-                self._train_epoch(epoch)
+            for epoch in range(15):
+                self._train_epoch(cnt)
+                cnt += 1
                 auc = self._valid_epoch()
                 if auc <= unprunned_auc:
                     torch.save(self.model.state_dict(), self.save_to)
