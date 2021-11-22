@@ -1,13 +1,9 @@
 # KWS project: CRNN compression and speed up
 
-## Get the repo
+## Installation guide
 ```shell
 git clone https://github.com/ainmukh/kws
 cd kws
-```
-
-## Installation guide
-```shell
 pip install -q -r ./requirements.txt
 ```
 
