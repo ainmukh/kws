@@ -24,14 +24,14 @@ class CRNNStreaming(CRNN):
         self.streaming = False
 
     def forward(self, batch, hidden=None):
-        if self.streaming:
-            batch = torch.cat((self.spec_buffer, batch), 2)
         batch = batch.unsqueeze(dim=1)
+        if self.streaming:
+            batch = torch.cat((self.spec_buffer, batch), 3)
 
         conv_output = self.conv(batch).transpose(-1, -2)
         gru_output, hidden = self.gru(conv_output, hidden)
         if self.streaming:
-            self.spec_buffer = batch[:, :, self.slide * conv_output.size(1):]
+            self.spec_buffer = batch[:, :, :, self.slide * conv_output.size(1):]
             gru_output = torch.cat((self.crnn_buffer, gru_output), 1)
             gru_output = gru_output[:, max(gru_output.size(1) - self.max_window_length, 0):]
             self.crnn_buffer = gru_output
