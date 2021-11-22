@@ -3,10 +3,10 @@ import wandb
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from kws.metric.au_fa_fr import get_au_fa_fr
 from config.config import TaskConfig
-from kws.base.base_model import CRNN
-from kws.dataset.preprocessing import LogMelspec
+from ..metric import get_au_fa_fr
+from ..dataset import LogMelspec
+from ..base import CRNN
 from IPython.display import clear_output
 
 
