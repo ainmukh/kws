@@ -8,6 +8,7 @@ from ..dataset import LogMelspec
 from ..metric import get_au_fa_fr
 from config.config import TaskConfig
 from IPython.display import clear_output
+import logging
 
 
 class PruneTrainer(BaseTrainer):
@@ -24,10 +25,13 @@ class PruneTrainer(BaseTrainer):
     def _prune(self):
         aucs = []
         torch.save(self.model.state_dict(), 'saved/model_to_prune.pth')
-        for i in range(self.model.conv[0].out_channels):
+        out_channels, input_size = self.model.conv[0].out_channels
+        self.config.cnn_out_channels = out_channels
+        for i in tqdm(range(self.model.conv[0].out_channels)):
             self._prune_conv(filter_idx=i)
             auc = self._get_rank()
             aucs.append(auc)
+
             self.model = CRNN(self.config).to(self.device)
             self.model.load_state_dict(
                 torch.load('saved/model_to_prune.pth', map_location=self.device)
@@ -74,27 +78,32 @@ class PruneTrainer(BaseTrainer):
         self.model = self.model.to(self.device)
 
     def prune_train(self):
+        logging.basicConfig(level=logging.INFO)
         self.logger.init(project='KWS', config=self.config.__dict__)
 
-        prev_auc = float('inf')
-        for epoch in range(self.epochs):
+        for iter in self.prune_iter:
+            unprunned_auc = self._get_rank()
             self._prune()
-            self._train_epoch(epoch)
-            auc = self._valid_epoch()
-            if auc < prev_auc:
-                torch.save(self.model.state_dict(), self.save_to)
-                prev_auc = auc
-            clear_output()
-            self.history.append(auc)
-            print('END OF EPOCH {:2}; auc: {:1.6f}'.format(epoch + 1, auc))
-        return self.history
+            auc = float('inf')
+            for epoch in range(10):
+                self._train_epoch(epoch)
+                auc = self._valid_epoch()
+                if auc <= unprunned_auc:
+                    torch.save(self.model.state_dict(), self.save_to)
+                    print('END OF EPOCH {:2}; auc: {:1.6f}; prunned: {:2}'.format(epoch + 1, auc, iter + 1))
+                    break
+                clear_output()
+                print('END OF EPOCH {:2}; auc: {:1.6f}'.format(epoch + 1, auc))
+            if auc > unprunned_auc:
+                logging.info(f"pruned {iter} filters")
+                break
 
     def _get_rank(self) -> float:
         self.model.eval()
         probabilities = []
         total_labels = []
         losses = []
-        for idx, (batch, labels) in tqdm(enumerate(self.val_loader), total=len(self.val_loader)):
+        for idx, (batch, labels) in enumerate(self.val_loader):
             batch, labels = batch.to(self.device), labels.to(self.device)
             batch = self.melspec_val(batch)
 
