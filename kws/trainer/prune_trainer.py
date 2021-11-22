@@ -86,18 +86,26 @@ class PruneTrainer(BaseTrainer):
         for iter in range(self.prune_iter):
             unprunned_auc = 5e-5 * 1.1
             self._prune()
+
             auc = float('inf')
             logging.info("Train prunned model")
             for epoch in range(15):
+                self.optimizer = torch.optim.Adam(
+                    self.model.parameters(),
+                    lr=self.config.learning_rate,
+                    weight_decay=self.config.weight_decay
+                )
                 self._train_epoch(cnt)
                 cnt += 1
                 auc = self._valid_epoch()
+
+                clear_output()
                 if auc <= unprunned_auc:
                     torch.save(self.model.state_dict(), self.save_to)
                     print('END OF EPOCH {:2}; auc: {:1.6f}; prunned: {:2}'.format(epoch + 1, auc, iter + 1))
                     break
-                clear_output()
                 print('END OF EPOCH {:2}; auc: {:1.6f}'.format(epoch + 1, auc))
+
             if auc > unprunned_auc:
                 logging.info(f"pruned {iter} filters")
                 break
