@@ -8,8 +8,8 @@ class CRNNStreaming(CRNN):
         super().__init__(config)
         self.streaming = False
         self.max_window_length = max_window_length  # crnn output size
-        self.T = (max_window_length - 1) * config.stride + config.kernel_size  # melspec size
-        self.slide = config.stride
+        self.T = (max_window_length - 1) * config.stride[1] + config.kernel_size[1]  # melspec size
+        self.slide = config.stride[1]
         self.spec_buffer = None
         self.crnn_buffer = None
 
