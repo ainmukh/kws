@@ -26,7 +26,7 @@ class PruneTrainer(BaseTrainer):
     def _prune(self):
         aucs = []
         torch.save(self.model.state_dict(), 'saved/model_to_prune.pth')
-        out_channels, input_size = self.model.conv[0].out_channels
+        out_channels = self.model.conv[0].out_channels
         self.config.cnn_out_channels = out_channels
         for i in tqdm(range(self.model.conv[0].out_channels)):
             self._prune_conv(filter_idx=i)
