@@ -1,3 +1,3 @@
-from .streaming_model import CRNN_streaming
+from .streaming_model import CRNNStreaming
 
-__all__ = ["CRNN_streaming"]
+__all__ = ["CRNNStreaming"]

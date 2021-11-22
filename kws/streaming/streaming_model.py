@@ -3,7 +3,7 @@ import torch
 from config.config import TaskConfig
 
 
-class CRNN_streaming(CRNN):
+class CRNNStreaming(CRNN):
     def __init__(self, config: TaskConfig, max_window_length: int = 7):
         super().__init__(config)
         self.streaming = False
