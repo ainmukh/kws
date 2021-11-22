@@ -28,6 +28,7 @@ class PruneTrainer(BaseTrainer):
         torch.save(self.model.state_dict(), 'saved/model_to_prune.pth')
         out_channels = self.model.conv[0].out_channels
         self.config.cnn_out_channels = out_channels
+        logging.info("Rank to prune")
         for i in tqdm(range(self.model.conv[0].out_channels)):
             self._prune_conv(filter_idx=i)
             auc = self._get_rank()
@@ -83,9 +84,10 @@ class PruneTrainer(BaseTrainer):
         self.logger.init(project='KWS', config=self.config.__dict__)
 
         for iter in range(self.prune_iter):
-            unprunned_auc = self._get_rank()
+            unprunned_auc = 5e-5
             self._prune()
             auc = float('inf')
+            logging.info("Train prunned model")
             for epoch in range(10):
                 self._train_epoch(epoch)
                 auc = self._valid_epoch()
